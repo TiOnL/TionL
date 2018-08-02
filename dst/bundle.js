@@ -98,8 +98,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const LAYER_DEFAULT_SIZE = 3;
 class Neural3L {
+    // (x:number)=>{return 1.2*x/(Math.abs(x)+0.5)};
     constructor(options) {
-        this.activationFunction = (x) => { return 1.2 * x / (Math.abs(x) + 0.5); };
+        this.activationFunction = (x) => { return 2 / (1 + Math.exp(-4.9 * x)) - 1; };
         this.inputSize = options["inputSize"] || LAYER_DEFAULT_SIZE;
         this.innerLayerSize = options["innerSize"] || LAYER_DEFAULT_SIZE;
         this.outputSize = options["outputSize"] || LAYER_DEFAULT_SIZE;
@@ -662,6 +663,8 @@ class SceneManager {
             if (!updatedIds.has(el[0])) {
                 this.scene.remove(el[1]);
                 this.objectMeshes.delete(el[0]);
+                el[1].geometry.dispose();
+                el[1].material.dispose();
             }
         }
     }
@@ -793,6 +796,7 @@ class World {
         this.processCreaturesQuotaPerTick = 0.3;
         this.tickNumber = 0;
         this.autoDoubleCreaturesLimit = 0;
+        this.maxItemsCount = 1000;
         this.creatures = new common_1.CircularList();
         this.items = new Array();
         this.idFactory = new IdFactory_1.IdFactory();
@@ -802,7 +806,7 @@ class World {
         if (this.getAliveCreatureCount() < this.autoDoubleCreaturesLimit) {
             this.doubleAliveCreatures();
         }
-        if (this.tickNumber % 3 === 0) {
+        if (this.tickNumber % 3 === 0 && this.items.length <= this.maxItemsCount) {
             var grassFood = {
                 id: this.idFactory.generateId(),
                 type: common_1.EntityTypes.FOOD_GRASS,
