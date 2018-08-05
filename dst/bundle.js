@@ -448,8 +448,8 @@ var UiController = (eventType, payload) => {
             world.doubleAliveCreatures();
             break;
         case EventTypes_1.EventTypes.CHECKBOX_AUTO_CLONE:
-            var autoDoubleLimit = (payload) ? 50 : 0;
-            world.setAutoDoubleCreaturesLimit(autoDoubleLimit);
+            var autoDoubleLimit = (payload) ? 20 : 0;
+            world.setAutoDoubleCreaturesLimit(autoDoubleLimit, autoDoubleLimit * 5);
             break;
         default:
             throw new Error("UiController wrong event type:" + eventType);
@@ -596,7 +596,7 @@ class MainPanel {
         this.domElement.innerHTML = `Creatures:<span > - </span>
     <button class = "button1">Spawn random</button>
     <button class = "button2">Double alive</button>
-    <input type=checkbox class= "checkbox1"> Auto clone if < 50</input>`;
+    <input type=checkbox class= "checkbox1"> Auto clone </input>`;
         this.domElement.setAttribute("style", `
           position:fixed;
           bottom:10px;
@@ -795,7 +795,8 @@ class World {
     constructor() {
         this.processCreaturesQuotaPerTick = 0.3;
         this.tickNumber = 0;
-        this.autoDoubleCreaturesLimit = 0;
+        this.autoCloneCreaturesStartLimit = 0;
+        this.autoCloneCreaturesStopLimit = 0;
         this.maxItemsCount = 1000;
         this.creatures = new common_1.CircularList();
         this.items = new Array();
@@ -803,8 +804,11 @@ class World {
     }
     tickUpdate() {
         this.processCreatures();
-        if (this.getAliveCreatureCount() < this.autoDoubleCreaturesLimit) {
-            this.doubleAliveCreatures();
+        if (this.getAliveCreatureCount() > 0 &&
+            this.getAliveCreatureCount() < this.autoCloneCreaturesStartLimit) {
+            while (this.getAliveCreatureCount() < this.autoCloneCreaturesStopLimit) {
+                this.doubleAliveCreatures();
+            }
         }
         if (this.tickNumber % 3 === 0 && this.items.length <= this.maxItemsCount) {
             var grassFood = {
@@ -856,8 +860,9 @@ class World {
     getAliveCreatureCount() {
         return this.creatures.getSize();
     }
-    setAutoDoubleCreaturesLimit(limit) {
-        this.autoDoubleCreaturesLimit = limit;
+    setAutoDoubleCreaturesLimit(low, high) {
+        this.autoCloneCreaturesStartLimit = low;
+        this.autoCloneCreaturesStopLimit = high;
     }
     processCreatures() {
         var currentNode = this.currentCreatureNode || this.creatures.getLastAddedNode();
@@ -985,6 +990,7 @@ class Rabbit extends Creature_1.Creature {
         this.attackPower = 1;
         this.defence = 1;
         this.gestationTime = 0;
+        this.recurrentValue = 0;
         this.idFactoryMethod = idFactoryMethod;
         this.id = idFactoryMethod();
         this.chromosome = chromosomeFactory({
@@ -1058,7 +1064,8 @@ class Rabbit extends Creature_1.Creature {
         var output = new Float32Array(outputBuffer);
         var moveX = output[0];
         var moveY = output[1];
-        var operation = findMaxElementIndex(output, 2, 10) - 2;
+        this.recurrentValue = output[2];
+        var operation = findMaxElementIndex(output, 3, 10) - 3;
         var param = findMaxElementIndex(output, 11, CHROMOSOME_OUTPUT_LENGTH - 1) - 11;
         this.processOperation(operation, param, nearEntities);
         this.move(moveX, moveY);
@@ -1085,6 +1092,7 @@ class Rabbit extends Creature_1.Creature {
         this.chromosomeInput[positionAfterObjects + 3] = (this.type === common_1.EntityTypes.RABBIT_M) ? 1 : 0;
         this.chromosomeInput[positionAfterObjects + 4] = (this.gestationChromosome) ? 1 : 0;
         this.chromosomeInput[positionAfterObjects + 5] = this.gestationTime / MAX_GESTATION_TIME;
+        this.chromosomeInput[positionAfterObjects + 6] = this.recurrentValue;
     }
     processOperation(operation, param, nearEntities) {
         switch (operation) {
