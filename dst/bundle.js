@@ -793,7 +793,7 @@ const chromosomes_1 = __webpack_require__(/*! ../chromosomes/chromosomes */ "./s
 const IdFactory_1 = __webpack_require__(/*! ./idfactory/IdFactory */ "./src/world/idfactory/IdFactory.ts");
 class World {
     constructor() {
-        this.processCreaturesQuotaPerTick = 0.3;
+        this.processCreaturesQuotaPerTick = 1.0;
         this.tickNumber = 0;
         this.autoCloneCreaturesStartLimit = 0;
         this.autoCloneCreaturesStopLimit = 0;
